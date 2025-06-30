@@ -1,16 +1,24 @@
-FROM tomcat:9-jdk17-openjdk
+# Use Render-friendly Tomcat base image with Java 17
+FROM docker.io/library/tomcat:9.0-jre17-temurin-jammy
 
-# Remove default webapps (optional, keeps it clean)
+# Remove default Tomcat apps to free resources
 RUN rm -rf /usr/local/tomcat/webapps/*
 
-# Add your WAR to Tomcat webapps directory
-COPY app.war /usr/local/tomcat/webapps/ROOT.war
+# Create directory for manual JAR dependencies
+RUN mkdir -p /usr/local/tomcat/lib
 
-# If you have extra JARs (e.g., JDBC drivers), copy them:
-COPY lib/* /usr/local/tomcat/lib/
+# Copy your manual JAR dependencies
+COPY ./lib/*.jar /usr/local/tomcat/lib/
 
-# Expose default port
+# Copy WAR file and deploy as root application
+# (Replace 'yourapp.war' with your actual filename)
+COPY ./webapps/yourapp.war /usr/local/tomcat/webapps/ROOT.war
+
+# Fix file permissions (critical for Render)
+RUN chmod -R 755 /usr/local/tomcat
+
+# Expose port 8080 (default Tomcat port)
 EXPOSE 8080
 
-# Start Tomcat (default CMD is fine, but you can be explicit)
+# Start Tomcat with security optimizations
 CMD ["catalina.sh", "run"]
